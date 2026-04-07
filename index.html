@@ -692,28 +692,35 @@
   async function loadData(silent) {
     const ind = document.getElementById('loadingIndicator');
     if (ind && !silent) ind.style.display = 'inline';
-    let api = [], ok = false;
+    let api = [], apiOk = false, todayOk = false;
     try {
       const r = await fetch('/api/history', { signal: AbortSignal.timeout(5000) });
-      if (r.ok) { const j = await r.json(); api = j.data || []; ok = true; }
+      if (r.ok) { const j = await r.json(); api = j.data || []; apiOk = true; }
     } catch(e) {}
     try {
-      const r2 = await fetch('/api/today', { signal: AbortSignal.timeout(8000) });
+      const r2 = await fetch('/api/today', { signal: AbortSignal.timeout(10000) });
       if (r2.ok) {
         const j2 = await r2.json();
+        todayOk = !j2.error;  // 只要没报错就视为API可达（盘前boards为null也算正常）
         if (j2.boards && !j2.non_trading && !j2.error) {
           const i = api.findIndex(d => d.date === j2.date);
           if (i >= 0) api[i] = j2; else api.push(j2);
-          ok = true;
         }
       }
     } catch(e) {}
+    const ok = apiOk || todayOk;
     renderAll(mergeData(STATIC_DATA, api));
     const now = new Date();
     const ts = now.toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     const h = now.getHours(), mi = now.getMinutes();
-    const mktOpen = (h > 9 || (h === 9 && mi >= 25)) && (h < 15 || (h === 15 && mi <= 5));
-    document.getElementById('updateTime').textContent = ts + (ok ? (mktOpen ? ' 盘中实时' : ' 盘后') : ' (离线)');
+    const wd = now.getDay(); // 0=日,6=六
+    const isWeekday = wd >= 1 && wd <= 5;
+    const mktOpen = isWeekday && (h > 9 || (h === 9 && mi >= 20)) && (h < 15 || (h === 15 && mi <= 10));
+    let statusLabel;
+    if (!ok)         statusLabel = ' (离线)';
+    else if (mktOpen) statusLabel = ' 盘中实时';
+    else              statusLabel = ' 盘后';
+    document.getElementById('updateTime').textContent = ts + statusLabel;
     if (ind) ind.style.display = 'none';
     return ok;
   }
@@ -722,7 +729,8 @@
   renderAll(STATIC_DATA.slice());
   document.getElementById('updateTime').textContent = '正在加载最新数据...';
   loadData(false);
-  setInterval(function() { loadData(true); }, 5 * 60 * 1000);
+  // 盘中每1分钟自动刷新
+  setInterval(function() { loadData(true); }, 60 * 1000);
 
   const btn = document.getElementById('refreshBtn');
   if (btn) {
