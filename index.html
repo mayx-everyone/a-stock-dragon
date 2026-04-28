@@ -3,866 +3,709 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A股每日最高连板龙头统计 | 2026-04-28</title>
+<title>A股每日最高连板龙头统计 | 情绪周期监测</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-       background: #1a1a2e; color: #eee; min-height: 100vh; padding: 16px; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #161b22, #1c2333);
+    border-bottom: 1px solid #30363d;
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #58a6ff;
+    letter-spacing: 1px;
+  }
+  .header .date-info {
+    font-size: 13px;
+    color: #8b949e;
+  }
+  .header .date-info .today { color: #f0883e; font-weight: 600; }
 
-.header {
-    text-align: center; margin-bottom: 24px;
-    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-    border-radius: 16px; padding: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-.header h1 { font-size: 26px; color: #ffd700; margin-bottom: 8px; }
+  /* Status Cards */
+  .status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
+  }
+  .card-red::before { background: #f85149; }
+  .card-blue::before { background: #58a6ff; }
+  .card-yellow::before { background: #d29922; }
+  .card-orange::before { background: #f0883e; }
+  .card-green::before { background: #3fb950; }
+  .card-label { font-size: 12px; color: #8b949e; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-value { font-size: 28px; font-weight: 800; line-height: 1.2; }
+  .card-sub { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  .card-red .card-value { color: #f85149; }
+  .card-blue .card-value { color: #58a6ff; }
+  .card-yellow .card-value { color: #d29922; }
+  .card-orange .card-value { color: #f0883e; }
+  .card-green .card-value { color: #3fb950; }
 
-.meta-row {
-    display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;
-    font-size: 13px; color: #aaa; margin: 6px 0;
-}
-.badge {
-    display: inline-block; padding: 3px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: bold;
-}
-.badge-akshare { background: #e94560; color: white; }
-.badge-ztke { background: #0f3460; color: #ffd700; border: 1px solid #ffd700; }
-.badge-cache { background: #444; color: #aaa; }
-.badge-none { background: #333; color: #888; }
+  /* Phase indicator */
+  .phase-banner {
+    border-radius: 10px;
+    padding: 14px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+  }
+  .phase-banner.start { background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.3); }
+  .phase-banner.ferment { background: rgba(63,185,80,0.12); border: 1px solid rgba(63,185,80,0.3); }
+  .phase-banner.climax { background: rgba(248,81,73,0.12); border: 1px solid rgba(248,81,73,0.3); }
+  .phase-banner.retreat { background: rgba(210,153,34,0.12); border: 1px solid rgba(210,153,34,0.3); }
+  .phase-banner.ice { background: rgba(139,148,158,0.12); border: 1px solid rgba(139,148,158,0.3); }
+  .phase-emoji { font-size: 28px; }
+  .phase-text strong { font-size: 16px; }
+  .phase-desc { color: #8b949e; margin-top: 2px; font-size: 12px; }
 
-.stats {
-    display: flex; justify-content: center; gap: 16px; margin: 12px 0; flex-wrap: wrap;
-}
-.stat-box {
-    background: rgba(255,255,255,0.05); padding: 10px 20px;
-    border-radius: 10px; text-align: center; min-width: 100px;
-}
-.stat-box .val { font-size: 22px; font-weight: bold; color: #ffd700; }
-.stat-box .label { font-size: 11px; color: #888; margin-top: 3px; }
+  /* Chart container */
+  .chart-section {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8b949e;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chart-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #58a6ff;
+    border-radius: 2px;
+  }
+  #chartCanvas { width: 100% !important; max-height: 500px; }
 
-.top-dragons {
-    margin: 20px 0; padding: 16px;
-    background: linear-gradient(135deg, #1e0030, #2d0040);
-    border-radius: 12px; border: 1px solid #6b21a8;
-}
-.top-dragons h2 { color: #c084fc; font-size: 16px; margin-bottom: 12px; }
-.dragon-list {
-    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-}
-.dragon {
-    background: rgba(107,33,168,0.3); border: 1px solid #6b21a8;
-    border-radius: 10px; padding: 12px 16px; min-width: 180px; text-align: center;
-}
-.dragon-rank { font-size: 18px; font-weight: bold; color: #ffd700; margin-bottom: 4px; }
-.dragon-name { font-size: 16px; color: #ff6b6b; font-weight: bold; margin: 4px 0; }
-.dragon-lianban { font-size: 20px; color: #c084fc; font-weight: bold; }
-.dragon-code { font-size: 11px; color: #888; margin-top: 4px; }
-.dragon-reason { font-size: 11px; color: #7bed9f; margin-top: 4px; }
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #21262d;
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .legend-tag {
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+    margin-left: 2px;
+  }
 
-.table-wrap { overflow-x: auto; border-radius: 12px; }
-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02);
-        border-radius: 12px; overflow: hidden; }
-thead { background: #0f3460; }
-th { padding: 10px 10px; text-align: center; color: #ffd700; font-size: 12px;
-     font-weight: 600; white-space: nowrap; position: sticky; top: 0; }
-td { padding: 8px 10px; text-align: center; border-bottom: 1px solid #2a2a4a; font-size: 12px; }
-tr:hover { background: rgba(233,69,96,0.08); }
-tr.highlight { background: rgba(255,215,0,0.06); }
+  /* Data Table */
+  .table-section {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #30363d;
+  }
+  .table-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8b949e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .table-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #3fb950;
+    border-radius: 2px;
+  }
+  .table-note { font-size: 11px; color: #484f58; }
+  .table-wrapper { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: #0d1117;
+    color: #8b949e;
+    font-weight: 600;
+    padding: 10px 16px;
+    text-align: center;
+    border-bottom: 1px solid #30363d;
+    white-space: nowrap;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  thead th:first-child { text-align: left; padding-left: 20px; }
+  tbody tr { border-bottom: 1px solid #21262d; transition: background 0.15s; }
+  tbody tr:hover { background: rgba(88,166,255,0.04); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: 9px 16px;
+    text-align: center;
+    color: #e6edf3;
+  }
+  tbody td:first-child { text-align: left; padding-left: 20px; color: #8b949e; font-size: 12px; }
+  .board-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    min-width: 36px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .board-high { background: rgba(248,81,73,0.2); color: #f85149; }
+  .board-mid { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .board-low { background: rgba(88,166,255,0.12); color: #58a6ff; }
+  .board-min { background: rgba(139,148,158,0.1); color: #8b949e; }
+  .stock-name { font-weight: 600; color: #e6edf3; }
+  .stock-code { font-size: 11px; color: #484f58; margin-left: 4px; }
+  .tag-20pct {
+    font-size: 10px;
+    padding: 1px 4px;
+    background: rgba(240,136,62,0.2);
+    color: #f0883e;
+    border-radius: 3px;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+  .tag-star {
+    font-size: 10px;
+    padding: 1px 4px;
+    background: rgba(248,81,73,0.2);
+    color: #f85149;
+    border-radius: 3px;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+  .phase-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .phase-start { background: rgba(88,166,255,0.15); color: #58a6ff; }
+  .phase-ferment { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .phase-climax { background: rgba(248,81,73,0.15); color: #f85149; }
+  .phase-retreat { background: rgba(210,153,34,0.15); color: #d29922; }
+  .phase-ice { background: rgba(139,148,158,0.12); color: #8b949e; }
+  .trend-up { color: #f85149; font-size: 16px; }
+  .trend-down { color: #3fb950; font-size: 16px; }
+  .trend-same { color: #8b949e; font-size: 16px; }
+  .today-row { background: rgba(240,136,62,0.06) !important; }
+  .today-row td { color: #f0883e !important; font-weight: 600; }
 
-.rank { font-weight: bold; color: #ffd700; }
-.name { color: #ff6b6b; font-weight: 600; text-align: left !important; max-width: 90px;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.code { color: #555; font-size: 10px; text-align: left !important; }
-.lianban { color: #ff4757; font-weight: bold; font-size: 15px; }
-.zhangfu { color: #2ed573; }
-.price { color: #fff; }
-.reason { color: #7bed9f; font-size: 10px; text-align: left !important;
-           max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.industry { color: #70a1ff; font-size: 10px; }
-.time { color: #ffd700; font-size: 10px; }
-.seal-fund { color: #ffa502; font-size: 10px; }
-.trend { font-size: 10px; }
+  /* Period section */
+  .period-section { margin-bottom: 32px; }
+  .period-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8b949e;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .period-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
+  }
+  .period-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .period-date { color: #484f58; font-size: 12px; min-width: 80px; }
+  .period-bar-wrap { flex: 1; height: 18px; background: #21262d; border-radius: 4px; overflow: hidden; position: relative; }
+  .period-bar { height: 100%; border-radius: 4px; transition: width 0.3s; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 10px; font-weight: 700; color: white; min-width: 20px; }
+  .period-bar.high { background: linear-gradient(90deg, #f85149, #ff7b72); }
+  .period-bar.mid { background: linear-gradient(90deg, #3fb950, #56d364); }
+  .period-bar.low { background: linear-gradient(90deg, #58a6ff, #79c0ff); }
+  .period-board { font-weight: 700; min-width: 50px; text-align: right; color: #8b949e; }
+  .period-name { color: #e6edf3; font-weight: 600; font-size: 12px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.no-data { text-align: center; padding: 60px; color: #666; font-size: 15px; }
-.footer { text-align: center; margin-top: 24px; color: #444; font-size: 11px; padding: 12px; }
-.sect-title {
-    color: #ffd700; font-size: 14px; margin: 20px 0 10px 0;
-    padding-bottom: 6px; border-bottom: 1px solid #333;
-}
+  /* Footer */
+  .footer { text-align: center; padding: 16px; color: #484f58; font-size: 11px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #161b22; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  /* Print */
+  @media print { body { background: white; color: black; } .card, .table-section, .chart-section { border-color: #ccc; } }
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    .header { flex-direction: column; gap: 8px; text-align: center; }
+    .status-cards { grid-template-columns: repeat(2, 1fr); }
+    .card-value { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
-<div class="header">
-    <h1>A股每日最高连板龙头统计</h1>
-    <div class="meta-row">
-        <span>数据日期: 2026-04-28</span>
-        <span>更新: 09:24:49</span>
-        <span class="badge badge-cache">
-            历史缓存数据
-        </span>
-    </div>
-    <div class="stats">
-        <div class="stat-box">
-            <div class="val">100</div>
-            <div class="label">涨停总数</div>
-        </div>
-        <div class="stat-box">
-            <div class="val">100</div>
-            <div class="label">连板股票(≥2板)</div>
-        </div>
-        <div class="stat-box">
-            <div class="val">0</div>
-            <div class="label">炸板次数>0</div>
-        </div>
-        <div class="stat-box">
-            <div class="val">3</div>
-            <div class="label">最高连板</div>
-        </div>
-    </div>
-</div>
-<div class="top-dragons"><h2>最高连板龙头</h2><div class="dragon-list">
-        <div class="dragon">
-            <div class="dragon-rank">🥇</div>
-            <div class="dragon-name">水发燃气</div>
-            <div class="dragon-code">603318</div>
-            <div class="dragon-lianban">3连板</div>
-            <div class="dragon-reason"></div>
-        </div>
-        <div class="dragon">
-            <div class="dragon-rank">🥈</div>
-            <div class="dragon-name">金螳螂</div>
-            <div class="dragon-code">002081</div>
-            <div class="dragon-lianban">5连板</div>
-            <div class="dragon-reason"></div>
-        </div>
-        <div class="dragon">
-            <div class="dragon-rank">🥉</div>
-            <div class="dragon-name">金螳螂</div>
-            <div class="dragon-code">002081</div>
-            <div class="dragon-lianban">4连板</div>
-            <div class="dragon-reason"></div>
-        </div></div></div><div class="sect-title">连板股票完整列表（按连板天数降序）</div>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-    <th>排名</th>
-    <th>名称</th>
-    <th>代码</th>
-    <th>连板</th>
-    <th>涨幅</th>
-    <th>最新价</th>
-    <th>涨停统计</th>
-    <th>行业</th>
-    <th>换手率</th>
-    <th>成交额</th>
-    <th>封板资金</th>
-    <th>首板时间</th>
-</tr>
-</thead>
-<tbody>
+<div class="container">
 
-<tr class="highlight">
-    <td class="rank">#1</td>
-    <td class="name">水发燃气</td>
-    <td class="code">603318</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.05%</td>
-    <td class="price">11.39</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>3.52%</td>
-    <td>2万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="highlight">
-    <td class="rank">#2</td>
-    <td class="name">金螳螂</td>
-    <td class="code">002081</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+9.92%</td>
-    <td class="price">5.43</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>12.50%</td>
-    <td>18万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="highlight">
-    <td class="rank">#3</td>
-    <td class="name">金螳螂</td>
-    <td class="code">002081</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.02%</td>
-    <td class="price">4.94</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>2.32%</td>
-    <td>3万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#4</td>
-    <td class="name">株冶集团</td>
-    <td class="code">600961</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">26.73</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.58%</td>
-    <td>3万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#5</td>
-    <td class="name">博云新材</td>
-    <td class="code">002297</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">19.46</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>15.08%</td>
-    <td>17万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#6</td>
-    <td class="name">圣阳股份</td>
-    <td class="code">002580</td>
-    <td class="lianban">7板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">30.58</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>18.18%</td>
-    <td>25万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#7</td>
-    <td class="name">圣阳股份</td>
-    <td class="code">002580</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">27.8</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>14.82%</td>
-    <td>18万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#8</td>
-    <td class="name">圣阳股份</td>
-    <td class="code">002580</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">25.27</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>23.86%</td>
-    <td>27万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#9</td>
-    <td class="name">华远控股</td>
-    <td class="code">600743</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+9.93%</td>
-    <td class="price">3.21</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>2.93%</td>
-    <td>2万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#10</td>
-    <td class="name">华远控股</td>
-    <td class="code">600743</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.19%</td>
-    <td class="price">2.92</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>3.45%</td>
-    <td>2万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#11</td>
-    <td class="name">华远控股</td>
-    <td class="code">600743</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.96%</td>
-    <td class="price">2.65</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>6.97%</td>
-    <td>4万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#12</td>
-    <td class="name">汇源通信</td>
-    <td class="code">000586</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+9.98%</td>
-    <td class="price">25.12</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>28.00%</td>
-    <td>13万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#13</td>
-    <td class="name">汇源通信</td>
-    <td class="code">000586</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.02%</td>
-    <td class="price">22.84</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.99%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#14</td>
-    <td class="name">津药药业</td>
-    <td class="code">600488</td>
-    <td class="lianban">7板</td>
-    <td class="zhangfu">+10.04%</td>
-    <td class="price">7.67</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>16.15%</td>
-    <td>13万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#15</td>
-    <td class="name">津药药业</td>
-    <td class="code">600488</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+9.94%</td>
-    <td class="price">6.97</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>8.59%</td>
-    <td>7万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#16</td>
-    <td class="name">津药药业</td>
-    <td class="code">600488</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.07%</td>
-    <td class="price">6.34</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.36%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#17</td>
-    <td class="name">津药药业</td>
-    <td class="code">600488</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.92%</td>
-    <td class="price">5.76</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>3.38%</td>
-    <td>2万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#18</td>
-    <td class="name">神剑股份</td>
-    <td class="code">002361</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">16.5</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>23.70%</td>
-    <td>31万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#19</td>
-    <td class="name">美诺华</td>
-    <td class="code">603538</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">43.1</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>4.12%</td>
-    <td>4万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#20</td>
-    <td class="name">美诺华</td>
-    <td class="code">603538</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.99%</td>
-    <td class="price">39.18</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>9.81%</td>
-    <td>8万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#21</td>
-    <td class="name">美诺华</td>
-    <td class="code">603538</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">35.62</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>13.31%</td>
-    <td>10万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#22</td>
-    <td class="name">华电辽能</td>
-    <td class="code">600396</td>
-    <td class="lianban">8板</td>
-    <td class="zhangfu">+10.03%</td>
-    <td class="price">8.34</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>6.78%</td>
-    <td>8万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#23</td>
-    <td class="name">华电辽能</td>
-    <td class="code">600396</td>
-    <td class="lianban">7板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">7.58</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>16.07%</td>
-    <td>17万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#24</td>
-    <td class="name">华电辽能</td>
-    <td class="code">600396</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+10.06%</td>
-    <td class="price">6.89</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>11.43%</td>
-    <td>11万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#25</td>
-    <td class="name">华电辽能</td>
-    <td class="code">600396</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.02%</td>
-    <td class="price">6.26</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>26.74%</td>
-    <td>24万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#26</td>
-    <td class="name">华电辽能</td>
-    <td class="code">600396</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.06%</td>
-    <td class="price">5.69</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>12.51%</td>
-    <td>10万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#27</td>
-    <td class="name">三房巷</td>
-    <td class="code">600370</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">3.63</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>10.65%</td>
-    <td>15万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#28</td>
-    <td class="name">三房巷</td>
-    <td class="code">600370</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">3.3</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>6.52%</td>
-    <td>8万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#29</td>
-    <td class="name">三房巷</td>
-    <td class="code">600370</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+9.89%</td>
-    <td class="price">3.0</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>4.29%</td>
-    <td>5万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#30</td>
-    <td class="name">中南文化</td>
-    <td class="code">002445</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.05%</td>
-    <td class="price">4.49</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>4.86%</td>
-    <td>5万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#31</td>
-    <td class="name">中南文化</td>
-    <td class="code">002445</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.97%</td>
-    <td class="price">4.08</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>0.49%</td>
-    <td>0万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#32</td>
-    <td class="name">宁波建工</td>
-    <td class="code">601789</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.94%</td>
-    <td class="price">7.3</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>48.45%</td>
-    <td>38万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#33</td>
-    <td class="name">王力安防</td>
-    <td class="code">605268</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+9.98%</td>
-    <td class="price">16.86</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>0.99%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#34</td>
-    <td class="name">王力安防</td>
-    <td class="code">605268</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.97%</td>
-    <td class="price">15.33</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.13%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#35</td>
-    <td class="name">卓郎智能</td>
-    <td class="code">600545</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.08%</td>
-    <td class="price">4.15</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>9.97%</td>
-    <td>7万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#36</td>
-    <td class="name">卓郎智能</td>
-    <td class="code">600545</td>
-    <td class="lianban">2板</td>
-    <td class="zhangfu">+9.91%</td>
-    <td class="price">3.77</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.05%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#37</td>
-    <td class="name">亚盛集团</td>
-    <td class="code">600108</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.98%</td>
-    <td class="price">5.29</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>18.67%</td>
-    <td>18万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#38</td>
-    <td class="name">亚盛集团</td>
-    <td class="code">600108</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.07%</td>
-    <td class="price">4.81</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>24.09%</td>
-    <td>22万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#39</td>
-    <td class="name">烽火通信</td>
-    <td class="code">600498</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">56.71</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>2.79%</td>
-    <td>20万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#40</td>
-    <td class="name">豫能控股</td>
-    <td class="code">001896</td>
-    <td class="lianban">7板</td>
-    <td class="zhangfu">+9.98%</td>
-    <td class="price">13.34</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>8.39%</td>
-    <td>17万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#41</td>
-    <td class="name">豫能控股</td>
-    <td class="code">001896</td>
-    <td class="lianban">6板</td>
-    <td class="zhangfu">+9.97%</td>
-    <td class="price">12.13</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>6.76%</td>
-    <td>12万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#42</td>
-    <td class="name">豫能控股</td>
-    <td class="code">001896</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+9.97%</td>
-    <td class="price">11.03</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>21.00%</td>
-    <td>34万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#43</td>
-    <td class="name">美邦股份</td>
-    <td class="code">605033</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">31.54</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>2.20%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#44</td>
-    <td class="name">掌阅科技</td>
-    <td class="code">603533</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">37.62</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>15.12%</td>
-    <td>25万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#45</td>
-    <td class="name">大位科技</td>
-    <td class="code">600589</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.00%</td>
-    <td class="price">13.86</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.68%</td>
-    <td>3万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#46</td>
-    <td class="name">百川股份</td>
-    <td class="code">002455</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">14.83</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>19.44%</td>
-    <td>15万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#47</td>
-    <td class="name">百川股份</td>
-    <td class="code">002455</td>
-    <td class="lianban">3板</td>
-    <td class="zhangfu">+10.04%</td>
-    <td class="price">13.48</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>1.76%</td>
-    <td>1万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#48</td>
-    <td class="name">韩建河山</td>
-    <td class="code">603616</td>
-    <td class="lianban">5板</td>
-    <td class="zhangfu">+10.01%</td>
-    <td class="price">9.12</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>37.17%</td>
-    <td>12万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#49</td>
-    <td class="name">韩建河山</td>
-    <td class="code">603616</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+9.95%</td>
-    <td class="price">8.29</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>16.87%</td>
-    <td>5万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr>
-<tr class="">
-    <td class="rank">#50</td>
-    <td class="name">民爆光电</td>
-    <td class="code">301362</td>
-    <td class="lianban">4板</td>
-    <td class="zhangfu">+20.00%</td>
-    <td class="price">93.29</td>
-    <td class="reason"></td>
-    <td class="industry"></td>
-    <td>57.80%</td>
-    <td>15万</td>
-    <td class="seal-fund">-</td>
-    <td class="time"></td>
-</tr></tbody></table></div>
-<div class="footer">
-    <p>数据仅供参考，不构成投资建议 | 来源: 历史缓存数据 | 更新: 09:24:49</p>
+  <!-- Header -->
+  <div class="header">
+    <h1>📊 A股每日最高连板龙头统计</h1>
+    <div class="date-info">
+      数据更新：<span class="today" id="updateTime">加载中...</span>
+      &nbsp;<span id="loadingIndicator" style="display:none;color:#58a6ff;font-size:11px">⏳</span>
+      &nbsp;|&nbsp;不含ST股
+      &nbsp;<button id="refreshBtn" style="background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;">🔄 刷新</button>
+    </div>
+  </div>
+
+  <!-- Status Cards -->
+  <div class="status-cards">
+    <div class="card card-red">
+      <div class="card-label">历史最高</div>
+      <div class="card-value" id="card-historic">18板</div>
+      <div class="card-sub">锋龙股份 · 1月23日</div>
+    </div>
+    <div class="card card-orange" id="card-today-wrap">
+      <div class="card-label">今日最高连板</div>
+      <div class="card-value" id="card-today">4板</div>
+      <div class="card-sub" id="card-today-name">津药药业</div>
+    </div>
+    <div class="card card-yellow">
+      <div class="card-label">近期峰值</div>
+      <div class="card-value" id="card-recent-peak">8板</div>
+      <div class="card-sub" id="card-recent-peak-sub">华电辽能 · 3月25日</div>
+    </div>
+    <div class="card card-blue" id="card-phase-wrap">
+      <div class="card-label">市场情绪周期</div>
+      <div class="card-value" id="card-phase">冰点期</div>
+      <div class="card-sub" id="card-phase-hint">连板高度持续收缩</div>
+    </div>
+  </div>
+
+  <!-- Phase Banner -->
+  <div class="phase-banner ice" id="phaseBanner">
+    <div class="phase-emoji" id="phaseEmoji">❄️</div>
+    <div class="phase-text">
+      <div><strong id="phaseName">当前：冰点期</strong></div>
+      <div class="phase-desc" id="phaseDesc">最高连板4板（津药药业等），ST批量涨停，市场情绪极弱。耐心等待新周期启动信号：跌停收敛、高标止跌、新龙头出现。</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-title">📈 每日最高连板高度走势（竖状图）</div>
+    <canvas id="chartCanvas"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>高潮期 (>8板)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>发酵期 (5-8板)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>启动期 (3-4板)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div>冰点期 (≤2板)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#484f58"></div>退潮期 (下降段)</div>
+      <div class="legend-item"><div class="legend-tag" style="background:rgba(240,136,62,0.2);color:#f0883e">@</div>20%涨停（创业板/科创板）</div>
+      <div class="legend-item"><div class="legend-tag" style="background:rgba(248,81,73,0.2);color:#f85149">★</div>历史最高连板</div>
+    </div>
+  </div>
+
+  <!-- Monthly Period Bars -->
+  <div class="period-section" id="periodSection"></div>
+
+  <!-- Full Data Table -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="table-title">完整数据记录</div>
+      <div class="table-note">标注@为20%涨停 · 标注★为历史最高 · 不含ST股</div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>最高连板</th>
+            <th>个股</th>
+            <th>涨停类型</th>
+            <th>情绪周期</th>
+            <th>日间变化</th>
+            <th>主题/备注</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    数据来源：涨停客量化(zhangtingke.com) · 每日盘中/盘后更新 · 不含ST股
+  </div>
 </div>
-</body></html>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+
+  // ==================== 静态备用数据 ====================
+  const STATIC_DATA = [
+    { date: "2026-01-05", boards: 7,  name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-06", boards: 13, name: "胜通能源", code: "001331", pct: 10, theme: "天然气", historic: false, pct20: false },
+    { date: "2026-01-07", boards: 14, name: "胜通能源", code: "001331", pct: 10, theme: "天然气", historic: false, pct20: false },
+    { date: "2026-01-08", boards: 11, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-09", boards: 11, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-12", boards: 12, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-13", boards: 13, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-14", boards: 5,  name: "直真科技", code: "003007", pct: 10, theme: "科技", historic: false, pct20: false },
+    { date: "2026-01-15", boards: 4,  name: "人民网",   code: "603000", pct: 10, theme: "媒体", historic: false, pct20: false },
+    { date: "2026-01-16", boards: 5,  name: "博菲电气", code: "001255", pct: 10, theme: "电气", historic: false, pct20: false },
+    { date: "2026-01-19", boards: 14, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-20", boards: 15, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-21", boards: 16, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-22", boards: 17, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: false, pct20: false },
+    { date: "2026-01-23", boards: 18, name: "锋龙股份", code: "002931", pct: 10, theme: "汽车零部件", historic: true,  pct20: false },
+    { date: "2026-01-26", boards: 5,  name: "白银有色", code: "601212", pct: 10, theme: "有色金属", historic: false, pct20: false },
+    { date: "2026-01-27", boards: 6,  name: "白银有色", code: "601212", pct: 10, theme: "有色金属", historic: false, pct20: false },
+    { date: "2026-01-28", boards: 7,  name: "白银有色", code: "601212", pct: 10, theme: "有色金属", historic: false, pct20: false },
+    { date: "2026-01-29", boards: 8,  name: "白银有色", code: "601212", pct: 10, theme: "有色金属", historic: false, pct20: false },
+    { date: "2026-01-30", boards: 5,  name: "湖南黄金", code: "002155", pct: 10, theme: "黄金", historic: false, pct20: false },
+    { date: "2026-02-03", boards: 4,  name: "横店影视", code: "603103", pct: 10, theme: "影视", historic: false, pct20: false },
+    { date: "2026-02-04", boards: 4,  name: "杭电股份", code: "603618", pct: 10, theme: "电力设备", historic: false, pct20: false },
+    { date: "2026-02-05", boards: 4,  name: "民爆光电", code: "301362", pct: 20, theme: "LED创业板", historic: false, pct20: true },
+    { date: "2026-02-06", boards: 4,  name: "韩建河山", code: "603616", pct: 10, theme: "水利", historic: false, pct20: false },
+    { date: "2026-02-09", boards: 5,  name: "韩建河山", code: "603616", pct: 10, theme: "水利", historic: false, pct20: false },
+    { date: "2026-02-10", boards: 3,  name: "百川股份", code: "002455", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-02-11", boards: 4,  name: "百川股份", code: "002455", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-02-12", boards: 4,  name: "大位科技", code: "600589", pct: 10, theme: "科技", historic: false, pct20: false },
+    { date: "2026-02-13", boards: 5,  name: "掌阅科技", code: "603533", pct: 10, theme: "传媒", historic: false, pct20: false },
+    { date: "2026-02-24", boards: 4,  name: "美邦股份", code: "605033", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-02-25", boards: 5,  name: "豫能控股", code: "001896", pct: 10, theme: "电力", historic: false, pct20: false },
+    { date: "2026-02-26", boards: 6,  name: "豫能控股", code: "001896", pct: 10, theme: "电力", historic: false, pct20: false },
+    { date: "2026-02-27", boards: 7,  name: "豫能控股", code: "001896", pct: 10, theme: "电力", historic: false, pct20: false },
+    { date: "2026-03-02", boards: 3,  name: "烽火通信", code: "600498", pct: 10, theme: "通信", historic: false, pct20: false },
+    { date: "2026-03-03", boards: 3,  name: "亚盛集团", code: "600108", pct: 10, theme: "农业", historic: false, pct20: false },
+    { date: "2026-03-04", boards: 4,  name: "亚盛集团", code: "600108", pct: 10, theme: "农业", historic: false, pct20: false },
+    { date: "2026-03-05", boards: 2,  name: "卓郎智能", code: "600545", pct: 10, theme: "纺织机械", historic: false, pct20: false },
+    { date: "2026-03-06", boards: 3,  name: "卓郎智能", code: "600545", pct: 10, theme: "纺织机械", historic: false, pct20: false },
+    { date: "2026-03-09", boards: 4,  name: "王力安防", code: "605268", pct: 10, theme: "安防", historic: false, pct20: false },
+    { date: "2026-03-10", boards: 5,  name: "王力安防", code: "605268", pct: 10, theme: "安防", historic: false, pct20: false },
+    { date: "2026-03-11", boards: 4,  name: "宁波建工", code: "601789", pct: 10, theme: "建筑", historic: false, pct20: false },
+    { date: "2026-03-12", boards: 4,  name: "中南文化", code: "002445", pct: 10, theme: "文化", historic: false, pct20: false },
+    { date: "2026-03-13", boards: 5,  name: "中南文化", code: "002445", pct: 10, theme: "文化", historic: false, pct20: false },
+    { date: "2026-03-16", boards: 3,  name: "三房巷",   code: "600370", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-03-17", boards: 4,  name: "三房巷",   code: "600370", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-03-18", boards: 5,  name: "三房巷",   code: "600370", pct: 10, theme: "化工", historic: false, pct20: false },
+    { date: "2026-03-19", boards: 4,  name: "华电辽能", code: "600396", pct: 10, theme: "绿电算电", historic: false, pct20: false },
+    { date: "2026-03-20", boards: 5,  name: "华电辽能", code: "600396", pct: 10, theme: "绿电算电", historic: false, pct20: false },
+    { date: "2026-03-23", boards: 6,  name: "华电辽能", code: "600396", pct: 10, theme: "绿电算电", historic: false, pct20: false },
+    { date: "2026-03-24", boards: 7,  name: "华电辽能", code: "600396", pct: 10, theme: "绿电算电", historic: false, pct20: false },
+    { date: "2026-03-25", boards: 8,  name: "华电辽能", code: "600396", pct: 10, theme: "绿电算电", historic: false, pct20: false },
+    { date: "2026-03-26", boards: 3,  name: "美诺华",   code: "603538", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-03-27", boards: 4,  name: "美诺华",   code: "603538", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-03-30", boards: 5,  name: "美诺华",   code: "603538", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-03-31", boards: 4,  name: "神剑股份", code: "002361", pct: 10, theme: "商业航天", historic: false, pct20: false },
+    { date: "2026-04-01", boards: 4,  name: "津药药业", code: "600488", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-04-02", boards: 5,  name: "津药药业", code: "600488", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-04-03", boards: 6,  name: "津药药业", code: "600488", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-04-07", boards: 7,  name: "津药药业", code: "600488", pct: 10, theme: "医药", historic: false, pct20: false },
+    { date: "2026-04-08", boards: 4,  name: "汇源通信", code: "000586", pct: 10, theme: "通信", historic: false, pct20: false },
+    { date: "2026-04-09", boards: 5,  name: "汇源通信", code: "000586", pct: 10, theme: "通信", historic: false, pct20: false },
+    { date: "2026-04-10", boards: 4,  name: "华远控股", code: "600743", pct: 10, theme: "地产", historic: false, pct20: false },
+    { date: "2026-04-13", boards: 5,  name: "华远控股", code: "600743", pct: 10, theme: "地产", historic: false, pct20: false },
+    { date: "2026-04-14", boards: 6,  name: "华远控股", code: "600743", pct: 10, theme: "地产", historic: false, pct20: false },
+    { date: "2026-04-15", boards: 5,  name: "圣阳股份", code: "002580", pct: 10, theme: "储能", historic: false, pct20: false },
+    { date: "2026-04-16", boards: 6,  name: "圣阳股份", code: "002580", pct: 10, theme: "储能", historic: false, pct20: false },
+    { date: "2026-04-17", boards: 7,  name: "圣阳股份", code: "002580", pct: 10, theme: "储能", historic: false, pct20: false },
+    { date: "2026-04-20", boards: 6,  name: "博云新材", code: "002297", pct: 10, theme: "军工", historic: false, pct20: false },
+    { date: "2026-04-21", boards: 4,  name: "株冶集团", code: "600961", pct: 10, theme: "有色", historic: false, pct20: false },
+    { date: "2026-04-22", boards: 4,  name: "金螳螂",   code: "002081", pct: 10, theme: "建筑装饰", historic: false, pct20: false },
+    { date: "2026-04-23", boards: 5,  name: "金螳螂",   code: "002081", pct: 10, theme: "建筑装饰", historic: false, pct20: false },
+    { date: "2026-04-24", boards: 3,  name: "水发燃气", code: "603318", pct: 10, theme: "天然气", historic: false, pct20: false },
+    { date: "2026-04-27", boards: 4,  name: "水发燃气", code: "603318", pct: 10, theme: "天然气", historic: false, pct20: false },
+    { date: "2026-04-28", boards: 5,  name: "水发燃气", code: "603318", pct: 10, theme: "天然气", historic: false, pct20: false },
+  ];
+
+  // ==================== HELPERS ====================
+  function getPhase(boards, prevBoards, peakInRun) {
+    if (boards <= 2) return 'ice';
+    if (boards >= 9) return 'climax';
+    if (prevBoards !== undefined && boards < prevBoards && boards < peakInRun * 0.6) return 'retreat';
+    if (boards <= 4) return 'start';
+    return 'ferment';
+  }
+
+  function phaseInfo(phase) {
+    const map = {
+      ice:     { emoji: '❄️', name: '冰点期', color: '#8b949e', bgClass: 'ice',     desc: '连板高度≤2板，跌停批量出现，龙头跌停。空仓等待。' },
+      start:   { emoji: '🌱', name: '启动期', color: '#58a6ff', bgClass: 'start',   desc: '新龙头出现3-4板，市场试探性做多。轻仓试探。' },
+      ferment: { emoji: '🔥', name: '发酵期', color: '#3fb950', bgClass: 'ferment', desc: '连板高度5-8板，赚钱效应扩散，积极参与龙头。' },
+      climax:  { emoji: '🚀', name: '高潮期', color: '#f85149', bgClass: 'climax',  desc: '连板高度>8板，历史级别行情。随时准备减仓踩刹车。' },
+      retreat: { emoji: '📉', name: '退潮期', color: '#d29922', bgClass: 'retreat', desc: '最高连板下降，高标开始补跌。管住手，小仓或空仓。' },
+    };
+    return map[phase] || map.ice;
+  }
+
+  function getBarColor(boards, phase) {
+    const c = { climax:'#f85149', ferment:'#3fb950', start:'#58a6ff', ice:'#8b949e', retreat:'#d29922' };
+    return c[phase] || '#58a6ff';
+  }
+
+  function getBoardClass(b) {
+    if (b >= 8) return 'board-high';
+    if (b >= 5) return 'board-mid';
+    if (b >= 3) return 'board-low';
+    return 'board-min';
+  }
+
+  function enrichData(data) {
+    let peak = 0, prev = null;
+    data.forEach(d => {
+      if (d.boards > peak) peak = d.boards;
+      d.phase = getPhase(d.boards, prev, peak);
+      d.phaseInfo = phaseInfo(d.phase);
+      d.prevBoards = prev;
+      prev = d.boards;
+    });
+    return data;
+  }
+
+  function mergeData(staticArr, apiArr) {
+    const map = {};
+    staticArr.forEach(d => { map[d.date] = Object.assign({}, d); });
+    apiArr.forEach(d => {
+      if (d.date && d.boards && !d.non_trading && !d.error) {
+        map[d.date] = {
+          date: d.date, boards: d.boards,
+          name: d.name || (map[d.date] ? map[d.date].name : '未知'),
+          code: d.code || (map[d.date] ? map[d.date].code : ''),
+          pct: d.pct || 10,
+          theme: d.theme || (map[d.date] ? map[d.date].theme : ''),
+          historic: d.historic || false,
+          pct20: d.pct20 || (d.pct === 20),
+        };
+      }
+    });
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // ==================== 渲染 ====================
+  let chart = null;
+
+  function renderAll(rawData) {
+    enrichData(rawData);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const labels = rawData.map(d => { const p = d.date.split('-'); return +p[1] + '/' + +p[2]; });
+    const vals = rawData.map(d => d.boards);
+    const bgs = rawData.map(d => getBarColor(d.boards, d.phase));
+    const bds = rawData.map((d, i) => d.historic ? '#ffd700' : d.pct20 ? '#f0883e' : bgs[i]);
+
+    if (chart) {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = vals;
+      chart.data.datasets[0].backgroundColor = bgs;
+      chart.data.datasets[0].borderColor = bds;
+      chart.update();
+    } else {
+      const ctx2 = document.getElementById('chartCanvas').getContext('2d');
+      chart = new Chart(ctx2, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: '最高连板数', data: vals, backgroundColor: bgs, borderColor: bds, borderWidth: 1, borderRadius: 4 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#21262d', borderColor: '#30363d', borderWidth: 1,
+              titleColor: '#58a6ff', bodyColor: '#e6edf3', padding: 12,
+              callbacks: {
+                title: function(c) { const d = rawData[c[0].dataIndex]; return d.date + ' · ' + d.name + '(' + d.code + ')'; },
+                label: function(c) {
+                  const d = rawData[c.dataIndex];
+                  return ['连板高度：' + d.boards + '板', '涨停类型：' + (d.pct===20?'20% ⚡':'10%'),
+                    '情绪周期：' + d.phaseInfo.name, '主题：' + d.theme,
+                    d.historic ? '★ 历史最高连板' : ''].filter(Boolean);
+                }
+              }
+            },
+            annotation: {}
+          },
+          scales: {
+            x: { ticks: { color: '#484f58', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#21262d' }, border: { color: '#30363d' } },
+            y: { min: 0, max: 20, ticks: { color: '#484f58', font: { size: 11 }, stepSize: 2, callback: function(v) { return v + '板'; } }, grid: { color: '#21262d' }, border: { color: '#30363d' } }
+          }
+        }
+      });
+    }
+
+    // Table
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    rawData.slice().reverse().forEach(d => {
+      const tr = d.boards > d.prevBoards ? '<span class="trend-up">▲</span>'
+        : d.boards < d.prevBoards ? '<span class="trend-down">▼</span>'
+        : (d.prevBoards === null ? '' : '<span class="trend-same">—</span>');
+      const row = document.createElement('tr');
+      if (d.date === todayStr) row.className = 'today-row';
+      row.innerHTML = '<td>' + d.date + '</td>'
+        + '<td><span class="board-tag ' + getBoardClass(d.boards) + '">' + d.boards + '板</span></td>'
+        + '<td style="text-align:left">' + d.name + '<span class="stock-code">' + d.code + '</span>'
+          + (d.pct20 ? '<span class="tag-20pct">@</span>' : '')
+          + (d.historic ? '<span class="tag-star">★</span>' : '') + '</td>'
+        + '<td>' + (d.pct === 20 ? '<span style="color:#f0883e;font-weight:700">20%</span>' : '<span style="color:#8b949e">10%</span>') + '</td>'
+        + '<td><span class="phase-tag phase-' + d.phase + '">' + d.phaseInfo.emoji + ' ' + d.phaseInfo.name + '</span></td>'
+        + '<td>' + tr + '</td>'
+        + '<td style="color:#8b949e;font-size:12px">' + d.theme + '</td>';
+      tbody.appendChild(row);
+    });
+
+    // Monthly bars
+    const ps = document.getElementById('periodSection');
+    ps.innerHTML = '';
+    const ms = {};
+    rawData.forEach(d => { ms[d.date.slice(0,7)] = true; });
+    Object.keys(ms).sort().forEach(ym => {
+      const [y, m] = ym.split('-');
+      const md = rawData.filter(d => d.date.startsWith(ym));
+      if (!md.length) return;
+      const pk = Math.max.apply(null, md.map(d => d.boards));
+      const pi = md.find(d => d.boards === pk);
+      const div = document.createElement('div');
+      div.className = 'period-section';
+      let rows = '';
+      md.forEach(d => {
+        const w = (d.boards/20*100).toFixed(1);
+        const cc = d.boards >= 8 ? 'high' : d.boards >= 5 ? 'mid' : 'low';
+        rows += '<div class="period-row"><div class="period-date">' + d.date.slice(5) + '</div>'
+          + '<div class="period-bar-wrap"><div class="period-bar ' + cc + '" style="width:' + Math.max(w,10) + '%">' + d.boards + '板</div></div>'
+          + '<div class="period-name">' + d.name + (d.pct20?'⚡':'') + '</div></div>';
+      });
+      div.innerHTML = '<div class="period-title">📅 ' + y + '年' + +m + '月 &nbsp;<span style="color:#484f58;font-size:11px">当月峰值：' + pk + '板(' + pi.name + ')</span></div>'
+        + '<div class="period-grid">' + rows + '</div>';
+      ps.appendChild(div);
+    });
+
+    // Cards
+    const last = rawData[rawData.length - 1];
+    document.getElementById('card-today').textContent = last.boards + '板';
+    document.getElementById('card-today-name').textContent = last.name + (last.pct20 ? ' @20%' : '');
+    const ph = last.phaseInfo;
+    document.getElementById('card-phase').textContent = ph.name;
+    document.getElementById('card-phase-hint').textContent = ({ice:'连板高度持续收缩',start:'新周期正在启动',ferment:'赚钱效应扩散中',climax:'历史级别行情',retreat:'高标开始补跌'})[last.phase] || '';
+    const banner = document.getElementById('phaseBanner');
+    banner.className = 'phase-banner ' + ph.bgClass;
+    document.getElementById('phaseEmoji').textContent = ph.emoji;
+    document.getElementById('phaseName').textContent = '当前：' + ph.name;
+    document.getElementById('phaseDesc').textContent = ph.desc;
+    const cut = new Date(); cut.setDate(cut.getDate() - 60);
+    const cutStr = cut.toISOString().slice(0,10);
+    const rf = rawData.filter(d => d.date >= cutStr);
+    const rp = rf.length ? rf.reduce((mx, d) => d.boards > mx.boards ? d : mx, rf[0]) : last;
+    document.getElementById('card-recent-peak').textContent = rp.boards + '板';
+    const rpSub = document.getElementById('card-recent-peak-sub');
+    if (rpSub) rpSub.textContent = rp.name + ' · ' + rp.date.slice(5);
+  }
+
+  // ==================== 数据加载 ====================
+  async function loadData(silent) {
+    const ind = document.getElementById('loadingIndicator');
+    if (ind && !silent) ind.style.display = 'inline';
+    let api = [], ok = false;
+    try {
+      const r = await fetch('/api/history', { signal: AbortSignal.timeout(5000) });
+      if (r.ok) { const j = await r.json(); api = j.data || []; ok = true; }
+    } catch(e) {}
+    try {
+      const r2 = await fetch('/api/today', { signal: AbortSignal.timeout(8000) });
+      if (r2.ok) {
+        const j2 = await r2.json();
+        if (j2.boards && !j2.non_trading && !j2.error) {
+          const i = api.findIndex(d => d.date === j2.date);
+          if (i >= 0) api[i] = j2; else api.push(j2);
+          ok = true;
+        }
+      }
+    } catch(e) {}
+    renderAll(mergeData(STATIC_DATA, api));
+    const now = new Date();
+    const ts = now.toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const h = now.getHours(), mi = now.getMinutes();
+    const mktOpen = (h > 9 || (h === 9 && mi >= 25)) && (h < 15 || (h === 15 && mi <= 5));
+    document.getElementById('updateTime').textContent = ts + (ok ? (mktOpen ? ' 盘中实时' : ' 盘后') : ' (离线)');
+    if (ind) ind.style.display = 'none';
+    return ok;
+  }
+
+  // 初始化
+  renderAll(STATIC_DATA.slice());
+  document.getElementById('updateTime').textContent = '正在加载最新数据...';
+  loadData(false);
+  setInterval(function() { loadData(true); }, 5 * 60 * 1000);
+
+  const btn = document.getElementById('refreshBtn');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      btn.disabled = true; btn.textContent = '刷新中...';
+      loadData(false).then(function() { btn.disabled = false; btn.textContent = '🔄 刷新'; });
+    });
+  }
+
+})();
+</script>
+</body>
